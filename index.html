@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaveri Clinic — Follow-up Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#mainContent">Skip to register</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="32" height="32">
+          <rect x="7" y="6" width="26" height="28" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M13 14h14M13 20h14M13 26h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>Kaveri Clinic</h1>
+        <p class="brand-sub">Follow-up register — who's due, who missed a visit</p>
+      </div>
+    </div>
+
+    <div class="header-search">
+      <label class="visually-hidden" for="searchInput">Search by patient name, complaint, or ID</label>
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="21" y1="21" x2="16.2" y2="16.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="Search patients, complaints, IDs…" autocomplete="off">
+      <button type="button" id="searchClear" class="search-clear" aria-label="Clear search" hidden>&times;</button>
+    </div>
+
+    <p class="header-date" id="todayLabel"></p>
+  </div>
+</header>
+
+<main id="mainContent">
+
+  <!-- LOADING STATE -->
+  <section id="loadingState" class="state-panel loading-panel" aria-live="polite">
+    <div class="pulse-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p>Opening the register…</p>
+  </section>
+
+  <!-- ERROR STATE -->
+  <section id="errorState" class="state-panel error-panel" hidden aria-live="assertive">
+    <div class="state-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28">
+        <path d="M12 3l10 18H2L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <line x1="12" y1="10" x2="12" y2="14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="17.3" r="1" fill="currentColor"/>
+      </svg>
+    </div>
+    <h2>The register didn't load</h2>
+    <p id="errorDetail">appointments.json couldn't be read. Check that the file sits next to index.html, then try again.</p>
+    <button type="button" id="retryButton" class="btn btn-primary">Try again</button>
+  </section>
+
+  <!-- APP CONTENT -->
+  <div id="appContent" hidden>
+
+    <!-- TRIAGE / ATTENTION SECTION -->
+    <section class="triage-section" aria-labelledby="triageHeading">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow">Right now</p>
+          <h2 id="triageHeading">Who needs attention today</h2>
+        </div>
+        <div class="triage-tallies" id="triageTallies" role="group" aria-label="Follow-up summary"></div>
+      </div>
+
+      <div class="triage-track-wrap">
+        <div class="triage-track" id="triageTrack" tabindex="0" aria-label="Patients due or overdue for follow-up, scrollable list"></div>
+      </div>
+
+      <p class="triage-empty" id="triageEmpty" hidden>Nothing due or overdue right now — every follow-up is on schedule.</p>
+    </section>
+
+    <!-- SIGNATURE DIVIDER: today marker on a perforated register line -->
+    <div class="register-divider" aria-hidden="true">
+      <span class="divider-line"></span>
+      <span class="divider-today" id="dividerToday"></span>
+      <span class="divider-line"></span>
+    </div>
+
+    <!-- REGISTER SECTION -->
+    <section class="register-section" aria-labelledby="registerHeading">
+      <div class="section-heading-row">
+        <div>
+          <p class="eyebrow">The full list</p>
+          <h2 id="registerHeading">Register</h2>
+        </div>
+        <p class="record-count" id="recordCount" aria-live="polite">40 records</p>
+      </div>
+
+      <div class="filter-row" role="tablist" aria-label="Filter by follow-up status">
+        <button class="filter-tab is-active" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="filter-tab" data-filter="due-today" role="tab" aria-selected="false">Due Today</button>
+        <button class="filter-tab" data-filter="upcoming" role="tab" aria-selected="false">Upcoming</button>
+        <button class="filter-tab" data-filter="missed" role="tab" aria-selected="false">Missed</button>
+      </div>
+
+      <div class="register-grid" id="registerGrid"></div>
+
+      <!-- EMPTY STATE: search/filter matches nothing -->
+      <div class="state-panel empty-panel" id="emptyState" hidden>
+        <div class="state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28">
+            <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <line x1="4" y1="9.5" x2="20" y2="9.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 14.5l2 2 4-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>No matching records</h2>
+        <p>Try a different search term, or switch back to All to see the whole register.</p>
+        <button type="button" class="btn btn-quiet" id="emptyResetButton">Clear search &amp; filters</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p>Kaveri Clinic · Follow-up register for front-desk use · Built for SIH 2026 practical assessment</p>
+</footer>
+
+<!-- DETAIL / SUMMARY VIEW -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalName">
+    <button type="button" class="modal-close" id="modalClose" aria-label="Close details">&times;</button>
+
+    <p class="modal-eyebrow" id="modalIdLine"></p>
+    <h3 id="modalName"></h3>
+    <p class="modal-sub" id="modalSub"></p>
+
+    <!-- derived figure, always shown first -->
+    <div class="modal-metric" id="modalMetric"></div>
+
+    <dl class="modal-grid">
+      <div><dt>Last visit</dt><dd id="modalVisitDate"></dd></div>
+      <div><dt>Attended that visit</dt><dd id="modalAttended"></dd></div>
+      <div><dt>Complaint</dt><dd id="modalComplaint"></dd></div>
+      <div><dt>Follow-up advised</dt><dd id="modalFollowupDate"></dd></div>
+      <div><dt>Contact</dt><dd id="modalContact"></dd></div>
+      <div><dt>Patient ID</dt><dd id="modalPatientId"></dd></div>
+    </dl>
+
+    <div class="modal-notes">
+      <h4>Clinical notes</h4>
+      <p id="modalNotes"></p>
+    </div>
+
+    <div class="modal-actions">
+      <a href="#" class="btn btn-primary" id="modalCallBtn">Call patient</a>
+      <button type="button" class="btn btn-quiet" id="modalCloseBtn2">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
