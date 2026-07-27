@@ -90,7 +90,23 @@ Two more spot-checks, for the other two states:
 
 ---
 
-## Screen states
+## On-spot changes 
+
+Two changes were added after the initial build, per the Level 2 on-spot brief:
+
+**Change 1 — row counter at the very top of the page.**
+A slim bar reading *"Showing X of 40 rows"* sits above the header, the first thing rendered on the page. It reads from the exact same filtered/searched list the register grid uses, so it's never a second source of truth that could drift out of sync — search, filter, or both, and the number updates immediately.
+
+**Change 2 — the days-figure "number column": no-data labelling + bottom-pinned sort.**
+Each card now also shows the raw signed number next to its status badge (`−16`, `0`, `+8`, or **`No data`**) — this is the literal number column the change targets. A **Sort by days figure** control above the register lets you flip between *"Most overdue first"* (ascending) and *"Furthest upcoming first"* (descending).
+- (a) Rows with no `followup_date` always show the word **"No data"** — never a blank cell, and never `0` (which is reserved for a real value: due today).
+- (b) In both sort directions, the "No data" rows are excluded from the numeric sort entirely and appended at the end, so they never land in the middle of the real numbers no matter which direction you sort.
+
+Verified for both directions against the dataset's 5 no-follow-up rows (`APT-2014, 2015, 2020, 2025, 2030`) — they sit at the bottom of the list either way, and the real numbers around them are in correct numeric order (not string order, so `-19` correctly sorts before `-3`).
+
+---
+
+
 
 | State | When it shows | What it says |
 |---|---|---|

@@ -13,6 +13,12 @@
 
 <a class="skip-link" href="#mainContent">Skip to register</a>
 
+<div class="top-counter-bar" id="topCounterBar" aria-live="polite">
+  <span class="top-counter-text">
+    Showing <strong id="topCounterShown">40</strong> of <span id="topCounterTotal">40</span> rows
+  </span>
+</div>
+
 <header class="site-header">
   <div class="header-inner">
     <div class="brand">
@@ -106,6 +112,17 @@
         <button class="filter-tab" data-filter="due-today" role="tab" aria-selected="false">Due Today</button>
         <button class="filter-tab" data-filter="upcoming" role="tab" aria-selected="false">Upcoming</button>
         <button class="filter-tab" data-filter="missed" role="tab" aria-selected="false">Missed</button>
+      </div>
+
+      <div class="sort-row">
+        <span class="sort-label">Sort by days figure:</span>
+        <button type="button" id="sortToggle" class="sort-toggle-btn" aria-pressed="false">
+          <span id="sortToggleText">Most overdue first</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <span class="sort-note">Rows with no follow-up date always sort to the bottom</span>
       </div>
 
       <div class="register-grid" id="registerGrid"></div>

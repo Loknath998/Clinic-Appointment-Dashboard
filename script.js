@@ -19,6 +19,9 @@
     todayLabel: document.getElementById('todayLabel'),
     dividerToday: document.getElementById('dividerToday'),
 
+    topCounterShown: document.getElementById('topCounterShown'),
+    topCounterTotal: document.getElementById('topCounterTotal'),
+
     searchInput: document.getElementById('searchInput'),
     searchClear: document.getElementById('searchClear'),
 
@@ -27,6 +30,8 @@
     triageEmpty: document.getElementById('triageEmpty'),
 
     filterTabs: Array.from(document.querySelectorAll('.filter-tab')),
+    sortToggle: document.getElementById('sortToggle'),
+    sortToggleText: document.getElementById('sortToggleText'),
     recordCount: document.getElementById('recordCount'),
     registerGrid: document.getElementById('registerGrid'),
     emptyState: document.getElementById('emptyState'),
@@ -53,6 +58,7 @@
   let allAppointments = [];
   let activeFilter = 'all';
   let searchTerm = '';
+  let sortDirection = 'asc'; // 'asc' = most overdue first · 'desc' = furthest upcoming first
   let lastFocusedEl = null;
 
   /* ---------------------------------------------------------
@@ -84,7 +90,7 @@
   }
 
   function metricText(status, diff) {
-    if (status === 'no-followup') return 'No follow-up scheduled';
+    if (status === 'no-followup') return 'No data — no follow-up scheduled';
     if (status === 'missed') return `${Math.abs(diff)} day${Math.abs(diff) === 1 ? '' : 's'} overdue`;
     if (status === 'due-today') return 'Due today';
     return `${diff} day${diff === 1 ? '' : 's'} until follow-up`;
@@ -93,7 +99,21 @@
   function enrich(appt) {
     const status = deriveStatus(appt);
     const diff = appt.followup_date ? dayDiff(appt.followup_date) : null;
-    return { ...appt, status, statusLabel: statusLabel(status), metric: metricText(status, diff) };
+    return { ...appt, status, statusLabel: statusLabel(status), metric: metricText(status, diff), daysValue: diff };
+  }
+
+  // The explicit "number column" value. Blank/missing (no followup_date)
+  // is always the word "No data" — never left blank and never shown as
+  // 0, since 0 is itself a real, meaningful value (due today).
+  function daysFigureText(appt) {
+    if (appt.daysValue === null) return 'No data';
+    if (appt.daysValue === 0) return '0';
+    return appt.daysValue > 0 ? `+${appt.daysValue}` : `${appt.daysValue}`;
+  }
+
+  function daysFigureAriaLabel(appt) {
+    if (appt.daysValue === null) return 'No data — no follow-up date on record';
+    return appt.metric;
   }
 
   function formatDate(dateStr) {
@@ -177,7 +197,10 @@
             <p class="patient-name">${escapeHtml(appt.patient_name)}</p>
             <p class="patient-meta">${appt.age} yrs · ${escapeHtml(appt.sex)} · ${escapeHtml(appt.patient_id)}</p>
           </div>
-          <span class="badge ${appt.status}">${appt.statusLabel}</span>
+          <div class="badge-row">
+            <span class="days-figure ${appt.status}" aria-label="${escapeHtml(daysFigureAriaLabel(appt))}">${daysFigureText(appt)}</span>
+            <span class="badge ${appt.status}">${appt.statusLabel}</span>
+          </div>
         </div>
         <p class="reason">${escapeHtml(appt.complaint || 'No complaint recorded')}</p>
         <p class="metric-line ${appt.status}">${appt.metric}</p>
@@ -205,16 +228,23 @@
       );
     }
 
-    return [...list].sort((a, b) => {
-      const da = a.followup_date ? dayDiff(a.followup_date) : Infinity;
-      const db = b.followup_date ? dayDiff(b.followup_date) : Infinity;
-      return da - db;
-    });
+    // Sort by the days-figure "number column". Rows with a real value
+    // sort numerically in the chosen direction; rows with no data
+    // (no followup_date) are never mixed in — they're always appended
+    // at the end, regardless of ascending or descending direction.
+    const withValue = list.filter(a => a.daysValue !== null);
+    const noData = list.filter(a => a.daysValue === null);
+    withValue.sort((a, b) => sortDirection === 'asc' ? a.daysValue - b.daysValue : b.daysValue - a.daysValue);
+    return [...withValue, ...noData];
   }
 
   function renderRegister() {
     const list = getFilteredAppointments();
     dom.recordCount.textContent = `${list.length} record${list.length === 1 ? '' : 's'}`;
+
+    // Change 1: the top-of-page counter always matches what's on screen.
+    dom.topCounterShown.textContent = list.length;
+    dom.topCounterTotal.textContent = allAppointments.length;
 
     if (list.length === 0) {
       dom.registerGrid.innerHTML = '';
@@ -233,6 +263,7 @@
             <p class="patient-meta">${appt.age} yrs · ${escapeHtml(appt.sex)} · ${escapeHtml(appt.patient_id)}</p>
           </div>
           <div class="badge-row">
+            <span class="days-figure ${appt.daysValue === null ? 'no-data' : appt.status}" aria-label="${escapeHtml(daysFigureAriaLabel(appt))}">${daysFigureText(appt)}</span>
             <span class="badge ${appt.status}">${appt.statusLabel}</span>
             ${!appt.attended ? '<span class="badge no-show">No-show</span>' : ''}
           </div>
@@ -366,6 +397,14 @@
         activeFilter = tab.dataset.filter;
         renderRegister();
       });
+    });
+
+    dom.sortToggle.addEventListener('click', () => {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      const isDesc = sortDirection === 'desc';
+      dom.sortToggle.setAttribute('aria-pressed', String(isDesc));
+      dom.sortToggleText.textContent = isDesc ? 'Furthest upcoming first' : 'Most overdue first';
+      renderRegister();
     });
 
     dom.emptyResetButton.addEventListener('click', () => {

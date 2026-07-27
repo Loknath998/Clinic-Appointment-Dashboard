@@ -82,6 +82,21 @@ button{ font-family: inherit; }
 :focus-visible{ outline: 2px solid var(--sage); outline-offset: 2px; }
 
 /* =========================================================
+   Top-of-page row counter (Change 1) — the very first thing
+   on the page, always in sync with search + filter results.
+   ========================================================= */
+.top-counter-bar{
+  background: var(--sage-deep);
+  color: #fff;
+  text-align: center;
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.top-counter-text strong{ font-weight: 700; }
+
+/* =========================================================
    Header
    ========================================================= */
 .site-header{
@@ -275,6 +290,25 @@ main{
 .badge.no-followup{ color: var(--ink-muted); background: var(--surface-alt); }
 .badge.no-show{ color: var(--wine); background: var(--wine-soft); }
 
+/* The days-figure is the literal "number column" value: a signed day
+   count, or the word "No data" — never blank, never a bare 0 standing
+   in for missing data (0 is a real value: due today). */
+.days-figure{
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.days-figure.missed{ color: var(--wine); border-color: var(--wine); background: var(--wine-soft); }
+.days-figure.due-today{ color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+.days-figure.upcoming{ color: var(--sage-deep); border-color: var(--sage); background: var(--sage-soft); }
+.days-figure.no-data{ color: var(--ink-faint); font-style: italic; font-weight: 500; border-style: dashed; }
+
 /* =========================================================
    Signature divider — a perforated register line with today's date
    ========================================================= */
@@ -304,7 +338,7 @@ main{
 /* =========================================================
    Filter row
    ========================================================= */
-.filter-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+.filter-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .filter-tab{
   border: 1px solid var(--border);
   background: var(--surface);
@@ -319,6 +353,37 @@ main{
 .filter-tab:hover{ border-color: var(--border-strong); color: var(--ink); }
 .filter-tab.is-active{ background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
 .record-count{ font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink-muted); margin: 0; }
+
+/* Sort control (Change 2) — sorts the days-figure column; rows with
+   no follow-up date are always excluded from the sort and appended
+   at the end, in either direction. */
+.sort-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.sort-label{ font-size: 0.82rem; color: var(--ink-muted); font-weight: 500; }
+.sort-toggle-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--sage-deep);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sort-toggle-btn:hover{ background: var(--sage-soft); }
+.sort-toggle-btn svg{ transition: transform 0.2s ease; }
+.sort-toggle-btn[aria-pressed="true"] svg{ transform: rotate(180deg); }
+.sort-note{ font-size: 0.76rem; color: var(--ink-faint); font-style: italic; }
 
 /* =========================================================
    Register grid + card
@@ -348,7 +413,7 @@ main{
 .reg-card .card-top{ display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .reg-card .patient-name{ font-family: var(--font-display); font-weight: 600; font-size: 1.04rem; margin: 0; color: var(--ink); }
 .reg-card .patient-meta{ font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px; }
-.reg-card .badge-row{ display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.reg-card .badge-row, .urgent-card .badge-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .reg-card .reason-line{ font-size: 0.88rem; color: var(--ink); }
 .reg-card .reason-line span{ color: var(--ink-muted); }
 
@@ -523,6 +588,8 @@ main{
   .modal-grid{ grid-template-columns: 1fr; }
   .modal-card{ padding: 24px 18px 20px; }
   .filter-tab{ min-height: 44px; }
+  .sort-toggle-btn{ min-height: 44px; }
+  .sort-row{ align-items: flex-start; }
   .search-clear{ width: 30px; height: 30px; }
   #searchInput{ min-height: 44px; }
   .reg-card, .urgent-card{ min-height: 44px; }
